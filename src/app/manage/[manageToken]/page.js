@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
+  LockKeyhole,
   RefreshCw,
   Users,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export default function ManageDashboardPage() {
   const [dashboard, setDashboard] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -97,6 +99,43 @@ export default function ManageDashboardPage() {
     } catch {
       setErrorMessage("Pautan tidak dapat disalin. Cuba salin secara manual.");
     }
+  }
+
+  async function closeResponses() {
+    if (!dashboard || dashboard.status !== "open" || isClosing) {
+      return;
+    }
+
+    const shouldClose = window.confirm(
+      "Tutup respons untuk pilihan ini? Peserta tidak lagi boleh menghantar jawapan baharu.",
+    );
+
+    if (!shouldClose) {
+      return;
+    }
+
+    setIsClosing(true);
+    setErrorMessage("");
+
+    const { data, error } = await supabase.rpc("close_decision_responses", {
+      p_manage_token: manageToken,
+    });
+
+    if (error) {
+      console.error("Unable to close responses:", error);
+      setErrorMessage("Respons belum berjaya ditutup. Cuba sekali lagi.");
+      setIsClosing(false);
+      return;
+    }
+
+    if (!data || data.status !== "closed") {
+      setErrorMessage("Respons pangkalan data tidak lengkap. Cuba sekali lagi.");
+      setIsClosing(false);
+      return;
+    }
+
+    await loadDashboard({ refresh: true });
+    setIsClosing(false);
   }
 
   const participantLink = dashboard?.publicToken
@@ -207,7 +246,7 @@ export default function ManageDashboardPage() {
               </article>
             </div>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
@@ -218,15 +257,26 @@ export default function ManageDashboardPage() {
               </button>
 
               <a
-  href={participantLink}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
->
-  <ExternalLink aria-hidden="true" size={17} />
-  Buka halaman peserta
-</a>
+                href={participantLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+              >
+                <ExternalLink aria-hidden="true" size={17} />
+                Buka halaman peserta
+              </a>
 
+              {dashboard.status === "open" && (
+                <button
+                  type="button"
+                  disabled={isClosing}
+                  className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-destructive/35 bg-destructive/10 px-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive hover:text-white disabled:cursor-wait disabled:opacity-60"
+                  onClick={closeResponses}
+                >
+                  <LockKeyhole aria-hidden="true" size={17} />
+                  {isClosing ? "Menutup..." : "Tutup respons"}
+                </button>
+              )}
             </div>
 
             {errorMessage && (
