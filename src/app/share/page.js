@@ -292,6 +292,16 @@ export default function ShareDecisionPage() {
                         Jangan kongsi pautan urus. Sesiapa yang memilikinya boleh
                         mengurus pilihan ini.
                       </p>
+                      <a
+  href={manageLink}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="focus-ring mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+>
+  <ExternalLink aria-hidden="true" size={18} />
+  Buka dashboard organizer
+</a>
+
                     </div>
                   </div>
                 </div>
