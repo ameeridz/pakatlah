@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import "./globals.css";
 
 const themeScript = `
@@ -102,6 +103,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: themeScript }}
         />
         {children}
+        <PwaInstallBanner />
       </body>
     </html>
   );
