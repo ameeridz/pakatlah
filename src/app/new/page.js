@@ -1,28 +1,64 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 
 const QUESTION_LIMIT = 120;
 const OPTION_LIMIT = 60;
 const MIN_OPTIONS = 2;
 const MAX_OPTIONS = 6;
+const DRAFT_STORAGE_KEY = "pakatlah-decision-draft";
 
 function createOption(id) {
-  return {
-    id,
-    name: "",
-  };
+  return { id, name: "" };
+}
+
+function createEmptyOptions() {
+  return [createOption("option-1"), createOption("option-2")];
 }
 
 export default function NewDecisionPage() {
+  const router = useRouter();
   const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState([
-    createOption("option-1"),
-    createOption("option-2"),
-  ]);
+  const [options, setOptions] = useState(createEmptyOptions);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const savedDraft = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
+
+        if (!savedDraft) {
+          return;
+        }
+
+        const parsedDraft = JSON.parse(savedDraft);
+        const savedQuestion =
+          typeof parsedDraft.question === "string" ? parsedDraft.question : "";
+        const savedOptions = Array.isArray(parsedDraft.options)
+          ? parsedDraft.options.filter(
+              (option) =>
+                option &&
+                typeof option.id === "string" &&
+                typeof option.name === "string",
+            )
+          : [];
+
+        setQuestion(savedQuestion.slice(0, QUESTION_LIMIT));
+        setOptions(
+          savedOptions.length >= MIN_OPTIONS
+            ? savedOptions.slice(0, MAX_OPTIONS)
+            : createEmptyOptions(),
+        );
+      } catch {
+        window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const normalizedQuestion = question.trim();
   const normalizedOptionNames = options.map((option) =>
@@ -83,6 +119,18 @@ export default function NewDecisionPage() {
     if (!isFormValid) {
       return;
     }
+
+    const draft = {
+      question: normalizedQuestion,
+      options: options.map((option) => ({
+        id: option.id,
+        name: option.name.trim(),
+      })),
+      updatedAt: new Date().toISOString(),
+    };
+
+    window.sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    router.push("/preview");
   }
 
   return (
@@ -134,7 +182,6 @@ export default function NewDecisionPage() {
                   <p className="max-w-[75%] text-sm leading-relaxed text-muted-foreground sm:max-w-none">
                     Semua peserta akan melihat soalan ini.
                   </p>
-
                   <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
                     {question.length}/{QUESTION_LIMIT}
                   </span>
@@ -199,7 +246,6 @@ export default function NewDecisionPage() {
                                 </p>
                               )}
                             </div>
-
                             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                               {option.name.length}/{OPTION_LIMIT}
                             </span>
@@ -210,7 +256,7 @@ export default function NewDecisionPage() {
                           type="button"
                           aria-label={`Buang pilihan ${index + 1}`}
                           disabled={options.length <= MIN_OPTIONS}
-                          className="focus-ring flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card/70 text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground disabled:cursor-not-allowed disabled:opacity-35"
+                          className="focus-ring flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card/70 text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-border disabled:hover:bg-card/70 disabled:hover:text-muted-foreground"
                           onClick={() => removeOption(option.id)}
                         >
                           <Trash2 aria-hidden="true" size={18} />
@@ -237,7 +283,7 @@ export default function NewDecisionPage() {
               disabled={!isFormValid}
               className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition duration-200 hover:bg-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:hover:bg-muted sm:ml-auto sm:w-auto"
             >
-              Teruskan
+              Semak pilihan
               <ArrowRight aria-hidden="true" size={18} />
             </button>
           </form>
