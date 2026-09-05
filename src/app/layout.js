@@ -1,12 +1,20 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-});
+const themeScript = `
+  (() => {
+    try {
+      const savedTheme = localStorage.getItem("pakatlah-theme");
+      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = savedTheme || (systemPrefersDark ? "dark" : "light");
+
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      document.documentElement.style.colorScheme = theme;
+    } catch (error) {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.style.colorScheme = "light";
+    }
+  })();
+`;
 
 export const metadata = {
   title: {
@@ -14,15 +22,16 @@ export const metadata = {
     template: "%s | Pakatlah",
   },
   description:
-    "Cari pilihan yang paling ramai boleh ikut, bukan sekadar yang mendapat undi terbanyak.",
+    "Cari pilihan yang semua boleh terima dengan lebih mudah.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ms" suppressHydrationWarning>
-      <body className={`${plusJakartaSans.variable} antialiased`}>
-        <ThemeProvider>{children}</ThemeProvider>
-      </body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>{children}</body>
     </html>
   );
 }

@@ -25,7 +25,7 @@ export default function Home() {
     <div className="app-background min-h-screen overflow-x-hidden">
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-12 sm:px-6 sm:pb-20 sm:pt-16 lg:px-8 lg:pb-24 lg:pt-20">
+      <main className="mx-auto w-full max-w-6xl px-5 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 md:pt-16 lg:px-8 lg:pb-24 lg:pt-20">
         <section className="grid items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-sm font-semibold text-primary shadow-sm backdrop-blur">
