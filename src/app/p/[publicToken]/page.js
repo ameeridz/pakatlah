@@ -80,6 +80,7 @@ export default function PublicDecisionPage() {
     };
   }, [publicToken]);
 
+  const isFinalized = decision?.status === "finalized";
   const isClosed = decision?.status !== "open";
   const answeredCount = decision
     ? decision.options.filter((option) =>
@@ -214,7 +215,11 @@ export default function PublicDecisionPage() {
                   : "bg-primary/10 text-primary",
               ].join(" ")}
             >
-              {isClosed ? "Respons ditutup" : "Respons dibuka"}
+              {isFinalized
+                ? "Keputusan dimuktamadkan"
+                : isClosed
+                  ? "Respons ditutup"
+                  : "Respons dibuka"}
             </span>
 
             <h1 className="mt-4 break-words text-3xl font-bold leading-tight tracking-[-0.025em] sm:text-4xl">
@@ -234,7 +239,26 @@ export default function PublicDecisionPage() {
               )}
             </div>
 
-            {isClosed ? (
+            {isFinalized && decision.finalOption ? (
+              <div className="glass-panel mt-7 rounded-3xl border-primary/30 bg-primary/10 p-6 text-center sm:mt-8 sm:p-8">
+                <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                  <CheckCircle2 aria-hidden="true" size={28} />
+                </span>
+
+                <p className="mt-5 text-sm font-semibold text-primary">
+                  Keputusan akhir
+                </p>
+
+                <h2 className="mt-2 break-words text-3xl font-bold tracking-[-0.025em] sm:text-4xl">
+                  {decision.finalOption.name}
+                </h2>
+
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+                  Pilihan ini telah dimuktamadkan oleh organizer berdasarkan
+                  respons kumpulan.
+                </p>
+              </div>
+            ) : isClosed ? (
               <div className="glass-panel mt-7 rounded-3xl p-6 text-center sm:mt-8">
                 <h2 className="text-xl font-semibold">Respons sudah ditutup</h2>
                 <p className="mt-2 text-sm text-muted-foreground">

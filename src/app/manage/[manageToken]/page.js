@@ -32,6 +32,8 @@ export default function ManageDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [selectedFinalOptionId, setSelectedFinalOptionId] = useState("");
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -71,6 +73,9 @@ export default function ManageDashboardPage() {
     }
 
     setDashboard(data);
+    setSelectedFinalOptionId(
+      data.finalOption?.id || data.options?.[0]?.id || "",
+    );
     setIsLoading(false);
     setIsRefreshing(false);
   }
@@ -136,6 +141,58 @@ export default function ManageDashboardPage() {
 
     await loadDashboard({ refresh: true });
     setIsClosing(false);
+  }
+
+  async function finalizeDecision() {
+    if (
+      !dashboard ||
+      dashboard.status !== "closed" ||
+      !selectedFinalOptionId ||
+      isFinalizing
+    ) {
+      return;
+    }
+
+    const selectedOption = dashboard.options.find(
+      (option) => option.id === selectedFinalOptionId,
+    );
+
+    if (!selectedOption) {
+      setErrorMessage("Pilih satu keputusan akhir.");
+      return;
+    }
+
+    const shouldFinalize = window.confirm(
+      `Muktamadkan ${selectedOption.name} sebagai keputusan akhir? Keputusan ini tidak boleh diubah selepas disimpan.`,
+    );
+
+    if (!shouldFinalize) {
+      return;
+    }
+
+    setIsFinalizing(true);
+    setErrorMessage("");
+
+    const { data, error } = await supabase.rpc("finalize_decision", {
+      p_manage_token: manageToken,
+      p_option_id: selectedFinalOptionId,
+    });
+
+    if (error) {
+      console.error("Unable to finalize decision:", error);
+      setErrorMessage("Keputusan belum berjaya dimuktamadkan. Cuba sekali lagi.");
+      setIsFinalizing(false);
+      return;
+    }
+
+    if (!data || data.status !== "finalized") {
+      setErrorMessage("Respons pangkalan data tidak lengkap. Cuba sekali lagi.");
+      setIsFinalizing(false);
+      return;
+    }
+
+    await loadDashboard({ refresh: true });
+    setIsFinalizing(false);
   }
 
   const participantLink = dashboard?.publicToken
@@ -233,7 +290,11 @@ export default function ManageDashboardPage() {
                     <Ban className="text-warning" size={20} />
                   )}
                   <p className="text-xl font-bold">
-                    {dashboard.status === "open" ? "Dibuka" : "Ditutup"}
+                    {dashboard.status === "open"
+                      ? "Dibuka"
+                      : dashboard.status === "finalized"
+                        ? "Dimuktamadkan"
+                        : "Ditutup"}
                   </p>
                 </div>
               </article>
@@ -283,6 +344,88 @@ export default function ManageDashboardPage() {
               <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm font-medium text-destructive">
                 {errorMessage}
               </p>
+            )}
+
+            {dashboard.status === "closed" && (
+              <section className="glass-panel mt-8 rounded-3xl p-5 sm:p-6">
+                <p className="text-sm font-semibold text-primary">
+                  Keputusan akhir
+                </p>
+                <h2 className="mt-2 text-2xl font-bold">
+                  Pilih keputusan untuk dimuktamadkan
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Pilihan ranking pertama dipilih secara automatik. Organizer masih
+                  boleh memilih pilihan lain sebelum memuktamadkan keputusan.
+                </p>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {dashboard.options.map((option, index) => {
+                    const isSelected = selectedFinalOptionId === option.id;
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        className={[
+                          "focus-ring flex items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-colors",
+                          isSelected
+                            ? "border-primary bg-primary/15 text-foreground"
+                            : "border-border bg-background/60 text-foreground hover:bg-secondary",
+                        ].join(" ")}
+                        onClick={() => setSelectedFinalOptionId(option.id)}
+                      >
+                        <span className="min-w-0">
+                          <span className="block break-words font-semibold">
+                            {option.name}
+                          </span>
+                          <span className="mt-1 block text-sm text-muted-foreground">
+                            Ranking {index + 1} · {option.consensusScore}% persetujuan
+                          </span>
+                        </span>
+
+                        <span
+                          className={[
+                            "flex size-6 shrink-0 items-center justify-center rounded-full border",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border",
+                          ].join(" ")}
+                        >
+                          {isSelected && (
+                            <CheckCircle2 aria-hidden="true" size={15} />
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={!selectedFinalOptionId || isFinalizing}
+                  className="focus-ring mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+                  onClick={finalizeDecision}
+                >
+                  <CheckCircle2 aria-hidden="true" size={18} />
+                  {isFinalizing ? "Menyimpan..." : "Muktamadkan keputusan"}
+                </button>
+              </section>
+            )}
+
+            {dashboard.status === "finalized" && dashboard.finalOption && (
+              <section className="glass-panel mt-8 rounded-3xl border-primary/30 bg-primary/10 p-5 sm:p-6">
+                <p className="text-sm font-semibold text-primary">
+                  Keputusan telah dimuktamadkan
+                </p>
+                <h2 className="mt-2 break-words text-3xl font-bold tracking-[-0.025em]">
+                  {dashboard.finalOption.name}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Keputusan akhir ini kini dipaparkan pada halaman peserta.
+                </p>
+              </section>
             )}
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

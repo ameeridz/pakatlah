@@ -10,7 +10,7 @@ export function AppHeader() {
             href="/"
             className="focus-ring rounded-lg text-lg font-bold tracking-[-0.04em] sm:text-xl"
           >
-            pakatlah
+            Pakatlah
           </Link>
 
           <ThemeToggle />
