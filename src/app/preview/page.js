@@ -142,12 +142,12 @@ export default function PreviewDecisionPage() {
                   Edit
                 </Link>
 
-                <button
-                  type="button"
+                <Link
+                  href="/setup"
                   className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
                 >
                   Seterusnya
-                </button>
+                </Link>
               </div>
             </>
           )}
