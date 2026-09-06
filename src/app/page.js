@@ -60,7 +60,7 @@ export default function Home() {
               className="mt-6 text-4xl leading-[1.14] tracking-[-0.025em] text-foreground sm:text-5xl lg:text-[3.4rem]"
               style={displayFont}
             >
-              Bila semua kata
+              Apabila semua kata
               <span className="block text-primary">“mana-mana”,</span>
               Pakatlah.
             </h1>
