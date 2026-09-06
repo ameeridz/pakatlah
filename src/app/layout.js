@@ -1,6 +1,9 @@
 import Script from "next/script";
+import "@fontsource-variable/oxanium/wght.css";
 import { PwaInstallBanner } from "@/components/pwa-install-banner";
 import "./globals.css";
+import "./glass-cross-browser.css";
+import "./oxanium-global.css";
 
 const themeScript = `
   (() => {

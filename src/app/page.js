@@ -2,21 +2,44 @@ import Link from "next/link";
 import { ArrowRight, Check, MessageCircle, Users } from "lucide-react";
 import { AppHeader } from "@/components/app-header";
 
+const displayFont = {
+  fontFamily: '"Oxanium Variable", "Plus Jakarta Sans Variable", sans-serif',
+};
+
 const previewOptions = [
   {
     name: "Tomyam Kak Mah",
     score: "86%",
-    status: "Paling sekata",
+    status: "Paling sesuai",
   },
   {
     name: "Nasi Kandar",
     score: "71%",
-    status: "Ramai boleh ikut",
+    status: "Pilihan yang selamat",
   },
   {
     name: "Food Court",
     score: "64%",
-    status: "Masih dipertimbang",
+    status: "Masih dipertimbangkan",
+  },
+];
+
+const steps = [
+  {
+    number: "01",
+    title: "Buat pilihan",
+    description: "Masukkan soalan dan pilihan yang mahu dipertimbangkan.",
+  },
+  {
+    number: "02",
+    title: "Share link",
+    description:
+      "Setiap orang beri respons untuk semua pilihan. Tak perlu sign up.",
+  },
+  {
+    number: "03",
+    title: "Lihat keputusan",
+    description: "Pakatlah susun ranking berdasarkan persetujuan group.",
   },
 ];
 
@@ -30,18 +53,21 @@ export default function Home() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-sm font-semibold text-primary shadow-sm backdrop-blur">
               <MessageCircle aria-hidden="true" size={16} />
-              Bincang kurang, pakat cepat
+              Group decision, made simple.
             </div>
 
-            <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-[-0.035em] text-foreground sm:text-5xl lg:text-6xl">
+            <h1
+              className="mt-6 text-4xl leading-[1.14] tracking-[-0.025em] text-foreground sm:text-5xl lg:text-[3.4rem]"
+              style={displayFont}
+            >
               Bila semua kata
               <span className="block text-primary">“mana-mana”,</span>
               Pakatlah.
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Cari pilihan yang paling ramai boleh ikut, bukan sekadar yang
-              mendapat undi terbanyak.
+              Semua orang bagi respons. Pakatlah bantu cari pilihan yang paling
+              sesuai untuk group.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -49,7 +75,7 @@ export default function Home() {
                 href="/new"
                 className="focus-ring inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition duration-200 hover:bg-primary-hover active:scale-[0.98]"
               >
-                Mula Pakat
+                Buat pilihan
                 <ArrowRight aria-hidden="true" size={18} />
               </Link>
 
@@ -57,22 +83,24 @@ export default function Home() {
                 href="#cara-ia-berfungsi"
                 className="focus-ring inline-flex h-12 items-center justify-center rounded-xl border border-border bg-card/70 px-5 text-base font-semibold text-foreground transition duration-200 hover:bg-secondary hover:text-secondary-foreground active:scale-[0.98]"
               >
-                Tengok cara dia jalan
+                Cara ia berfungsi
               </a>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Check aria-hidden="true" className="text-primary" size={16} />
-                Tak perlu daftar
+                Tak perlu sign up
               </span>
+
               <span className="inline-flex items-center gap-1.5">
                 <Check aria-hidden="true" className="text-primary" size={16} />
-                Mesra semua device
+                Boleh guna pada semua device
               </span>
+
               <span className="inline-flex items-center gap-1.5">
                 <Check aria-hidden="true" className="text-primary" size={16} />
-                Share terus dengan geng
+                Mudah untuk share
               </span>
             </div>
           </div>
@@ -91,17 +119,20 @@ export default function Home() {
               <div className="rounded-2xl border border-border bg-card/85 p-5 shadow-sm sm:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-primary">
-                      Keputusan sementara
+                    <p
+                      className="text-xs tracking-wide text-primary"
+                      style={displayFont}
+                    >
+                      LIVE RESULTS
                     </p>
                     <h2 className="mt-2 text-xl font-bold tracking-[-0.02em] sm:text-2xl">
-                      Nak makan dekat mana malam ni?
+                      Nak makan dekat mana malam ini?
                     </h2>
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground">
                     <Users aria-hidden="true" size={14} />
-                    8 jawab
+                    8 respons
                   </div>
                 </div>
 
@@ -121,17 +152,26 @@ export default function Home() {
                           <div className="flex items-center gap-2">
                             {index === 0 && (
                               <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                <Check aria-hidden="true" size={14} strokeWidth={3} />
+                                <Check
+                                  aria-hidden="true"
+                                  size={14}
+                                  strokeWidth={3}
+                                />
                               </span>
                             )}
-                            <p className="truncate font-semibold">{option.name}</p>
+                            <p className="truncate font-semibold">
+                              {option.name}
+                            </p>
                           </div>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {option.status}
                           </p>
                         </div>
 
-                        <p className="shrink-0 text-xl font-bold tracking-tight">
+                        <p
+                          className="shrink-0 text-lg tracking-tight"
+                          style={displayFont}
+                        >
                           {option.score}
                         </p>
                       </div>
@@ -140,7 +180,9 @@ export default function Home() {
                         <div
                           className={[
                             "h-full rounded-full",
-                            index === 0 ? "bg-primary" : "bg-muted-foreground/35",
+                            index === 0
+                              ? "bg-primary"
+                              : "bg-muted-foreground/35",
                           ].join(" ")}
                           style={{ width: option.score }}
                         />
@@ -151,11 +193,11 @@ export default function Home() {
 
                 <div className="mt-5 rounded-2xl border border-primary/20 bg-primary/10 p-4">
                   <p className="text-sm font-semibold text-foreground">
-                    Tomyam Kak Mah paling ramai boleh ikut.
+                    Tomyam Kak Mah paling sesuai untuk group.
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Persetujuan paling tinggi dengan respons “Tak boleh” paling
-                    rendah.
+                    Skor persetujuan tertinggi, dengan paling sedikit respons
+                    “Tak boleh”.
                   </p>
                 </div>
               </div>
@@ -168,41 +210,34 @@ export default function Home() {
           className="scroll-mt-28 pt-24 sm:pt-28"
         >
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold text-primary">Mudah saja</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-[-0.025em] sm:text-4xl">
-              Daripada “mana-mana” kepada keputusan.
+            <p
+              className="text-xs tracking-wide text-primary"
+              style={displayFont}
+            >
+              HOW IT WORKS
+            </p>
+            <h2
+              className="mt-3 text-2xl leading-snug tracking-[-0.02em] sm:text-3xl"
+              style={displayFont}
+            >
+              Dari banyak pendapat, jadi satu keputusan.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-              Buat pilihan, share dengan geng, dan lihat mana yang paling sekata.
+              Buat pilihan, share link, dan lihat pilihan yang paling sesuai
+              untuk semua.
             </p>
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {[
-              {
-                number: "01",
-                title: "Buat pilihan",
-                description:
-                  "Tulis soalan dan masukkan pilihan yang geng kau boleh pertimbangkan.",
-              },
-              {
-                number: "02",
-                title: "Share dengan geng",
-                description:
-                  "Semua orang beri reaksi kepada setiap pilihan tanpa perlu daftar.",
-              },
-              {
-                number: "03",
-                title: "Terus pakat",
-                description:
-                  "Pakatlah tunjuk pilihan yang paling ramai boleh terima dan ikut.",
-              },
-            ].map((step) => (
+            {steps.map((step) => (
               <article
                 key={step.number}
                 className="rounded-2xl border border-border bg-card/75 p-5 shadow-sm backdrop-blur-sm sm:p-6"
               >
-                <span className="text-sm font-bold text-primary">
+                <span
+                  className="text-sm text-primary"
+                  style={displayFont}
+                >
                   {step.number}
                 </span>
                 <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>

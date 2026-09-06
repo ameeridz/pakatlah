@@ -159,10 +159,16 @@ export default function NewDecisionPage() {
             Tulis soalan dan masukkan pilihan yang boleh dipertimbangkan.
           </p>
 
-          <form className="mt-7 space-y-5 sm:mt-8 sm:space-y-6" onSubmit={handleSubmit}>
+          <form
+            className="mt-7 space-y-5 sm:mt-8 sm:space-y-6"
+            onSubmit={handleSubmit}
+          >
             <div className="glass-panel rounded-3xl p-5 sm:p-6">
-              <div className="space-y-3">
-                <label htmlFor="decision-question" className="text-sm font-semibold">
+              <div>
+                <label
+                  htmlFor="decision-question"
+                  className="text-sm font-semibold"
+                >
                   Soalan
                 </label>
 
@@ -174,14 +180,15 @@ export default function NewDecisionPage() {
                   rows={4}
                   autoFocus
                   placeholder="Contoh: Nak makan di mana malam ini?"
-                  className="focus-ring min-h-32 w-full resize-none rounded-2xl border border-input bg-background/80 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground"
+                  className="focus-ring mt-4 min-h-32 w-full resize-none rounded-2xl border border-input bg-background/80 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground"
                   onChange={(event) => setQuestion(event.target.value)}
                 />
 
-                <div className="flex items-start justify-between gap-3">
+                <div className="mt-3 flex items-start justify-between gap-3">
                   <p className="max-w-[75%] text-sm leading-relaxed text-muted-foreground sm:max-w-none">
                     Semua peserta akan melihat soalan ini.
                   </p>
+
                   <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
                     {question.length}/{QUESTION_LIMIT}
                   </span>
@@ -246,6 +253,7 @@ export default function NewDecisionPage() {
                                 </p>
                               )}
                             </div>
+
                             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                               {option.name.length}/{OPTION_LIMIT}
                             </span>
