@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Link2,
   LoaderCircle,
+  Share2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
@@ -22,6 +23,7 @@ export default function ShareDecisionPage() {
   const [publishedDecision, setPublishedDecision] = useState(null);
   const [isReady, setIsReady] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -81,9 +83,7 @@ export default function ShareDecisionPage() {
 
     if (error) {
       console.error("Unable to create decision:", error);
-      setErrorMessage(
-        "Pautan belum berjaya dihasilkan. Cuba sekali lagi.",
-      );
+      setErrorMessage("Pautan belum berjaya dihasilkan. Cuba sekali lagi.");
       setIsPublishing(false);
       return;
     }
@@ -116,12 +116,53 @@ export default function ShareDecisionPage() {
     try {
       await navigator.clipboard.writeText(value);
       setCopiedField(field);
+      setErrorMessage("");
 
       window.setTimeout(() => {
         setCopiedField(null);
       }, 1800);
+
+      return true;
     } catch {
-      setErrorMessage("Pautan tidak dapat disalin. Salin secara manual.");
+      setErrorMessage("Pautan tidak dapat disalin. Cuba gunakan butang Share.");
+      return false;
+    }
+  }
+
+  async function shareParticipantLink() {
+    if (!participantLink || isSharing) {
+      return;
+    }
+
+    setIsSharing(true);
+    setErrorMessage("");
+
+    const shareData = {
+      title: "Pakatlah",
+      text: draft?.question
+        ? `Bagi respons untuk pilihan ini: ${draft.question}`
+        : "Bagi respons untuk pilihan ini di Pakatlah.",
+      url: participantLink,
+    };
+
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share(shareData);
+      } else {
+        await copyText(participantLink, "participant");
+      }
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        const copied = await copyText(participantLink, "participant");
+
+        if (!copied) {
+          setErrorMessage(
+            "Pautan tidak dapat dikongsi. Cuba buka pautan peserta dan kongsi dari browser.",
+          );
+        }
+      }
+    } finally {
+      setIsSharing(false);
     }
   }
 
@@ -227,7 +268,7 @@ export default function ShareDecisionPage() {
                     <div>
                       <h2 className="font-semibold">Pautan sudah tersedia</h2>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Kongsi pautan peserta. Simpan pautan urus untuk diri sendiri.
+                        Share pautan peserta. Simpan pautan urus untuk diri sendiri.
                       </p>
                     </div>
                   </div>
@@ -237,17 +278,37 @@ export default function ShareDecisionPage() {
                       <label className="text-sm font-semibold">
                         Pautan peserta
                       </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          readOnly
-                          value={participantLink}
-                          className="h-12 min-w-0 flex-1 rounded-xl border border-input bg-background/80 px-4 text-sm text-foreground"
-                        />
+
+                      <input
+                        type="text"
+                        readOnly
+                        value={participantLink}
+                        className="h-12 w-full rounded-xl border border-input bg-background/80 px-4 text-sm text-foreground"
+                      />
+
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_auto_auto]">
+                        <button
+                          type="button"
+                          disabled={isSharing}
+                          className="focus-ring col-span-2 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70 sm:col-span-1"
+                          onClick={shareParticipantLink}
+                        >
+                          {isSharing ? (
+                            <LoaderCircle
+                              aria-hidden="true"
+                              className="animate-spin"
+                              size={18}
+                            />
+                          ) : (
+                            <Share2 aria-hidden="true" size={18} />
+                          )}
+                          {isSharing ? "Membuka Share..." : "Share link"}
+                        </button>
+
                         <button
                           type="button"
                           aria-label="Salin pautan peserta"
-                          className="focus-ring flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card/70 text-foreground transition-colors hover:bg-secondary"
+                          className="focus-ring inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
                           onClick={() => copyText(participantLink, "participant")}
                         >
                           {copiedField === "participant" ? (
@@ -255,13 +316,18 @@ export default function ShareDecisionPage() {
                           ) : (
                             <Copy aria-hidden="true" size={18} />
                           )}
+                          {copiedField === "participant" ? "Disalin" : "Copy"}
                         </button>
+
                         <a
                           href={participantLink}
-                          aria-label="Buka pautan peserta"
-                          className="focus-ring flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card/70 text-foreground transition-colors hover:bg-secondary"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Buka pautan peserta dalam tab baru"
+                          className="focus-ring inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
                         >
                           <ExternalLink aria-hidden="true" size={18} />
+                          Buka
                         </a>
                       </div>
                     </div>
@@ -292,16 +358,16 @@ export default function ShareDecisionPage() {
                         Jangan kongsi pautan urus. Sesiapa yang memilikinya boleh
                         mengurus pilihan ini.
                       </p>
-                      <a
-  href={manageLink}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="focus-ring mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
->
-  <ExternalLink aria-hidden="true" size={18} />
-  Buka dashboard organizer
-</a>
 
+                      <a
+                        href={manageLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="focus-ring mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
+                      >
+                        <ExternalLink aria-hidden="true" size={18} />
+                        Buka dashboard organizer
+                      </a>
                     </div>
                   </div>
                 </div>
