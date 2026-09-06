@@ -14,6 +14,7 @@ import {
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { ScoringExplainer } from "@/components/scoring-explainer";
 import { supabase } from "@/lib/supabase/client";
 
 const PARTICIPANT_NAME_LIMIT = 40;
@@ -342,6 +343,8 @@ export default function PublicDecisionPage() {
                 />
               </button>
             </div>
+
+            <ScoringExplainer className="mt-5" />
 
             {participantResults.status === "finalized" &&
               participantResults.finalOption && (

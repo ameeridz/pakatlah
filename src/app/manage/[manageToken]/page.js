@@ -15,6 +15,7 @@ import {
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { ScoringExplainer } from "@/components/scoring-explainer";
 import { supabase } from "@/lib/supabase/client";
 
 const reactionLabels = {
@@ -230,7 +231,9 @@ export default function ManageDashboardPage() {
               <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
                 <AlertCircle aria-hidden="true" size={26} />
               </span>
-              <h1 className="mt-5 text-2xl font-bold">Dashboard tidak tersedia</h1>
+              <h1 className="mt-5 text-2xl font-bold">
+                Dashboard tidak tersedia
+              </h1>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
                 {errorMessage}
               </p>
@@ -276,7 +279,9 @@ export default function ManageDashboardPage() {
                   </span>
                   <div>
                     <p className="text-sm text-muted-foreground">Jumlah peserta</p>
-                    <p className="text-2xl font-bold">{dashboard.participantCount}</p>
+                    <p className="text-2xl font-bold">
+                      {dashboard.participantCount}
+                    </p>
                   </div>
                 </div>
               </article>
@@ -381,7 +386,8 @@ export default function ManageDashboardPage() {
                             {option.name}
                           </span>
                           <span className="mt-1 block text-sm text-muted-foreground">
-                            Ranking {index + 1} · {option.consensusScore}% persetujuan
+                            Ranking {index + 1} · {option.consensusScore}%
+                            persetujuan
                           </span>
                         </span>
 
@@ -434,6 +440,8 @@ export default function ManageDashboardPage() {
                   <p className="text-sm font-semibold text-primary">Keputusan</p>
                   <h2 className="mt-2 text-2xl font-bold">Ranking pilihan</h2>
                 </div>
+
+                <ScoringExplainer className="mt-4" />
 
                 <div className="mt-4 space-y-4">
                   {dashboard.options.map((option, index) => (
