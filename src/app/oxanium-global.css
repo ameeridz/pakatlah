@@ -1,0 +1,63 @@
+/* Pakatlah global typography */
+
+:root {
+  --font-sans: "Oxanium Variable", Arial, Helvetica, sans-serif;
+}
+
+html,
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Oxanium Variable", Arial, Helvetica, sans-serif;
+}
+
+body {
+  font-weight: 400;
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+label,
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-extrabold {
+  font-weight: 800;
+}
+
+input,
+textarea,
+select,
+p,
+li {
+  letter-spacing: -0.005em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Oxanium Variable", Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}

@@ -38,9 +38,10 @@ export function PwaInstallBanner() {
     }
 
     const ios = isIosDevice();
-    setIsIos(ios);
 
     const showTimer = window.setTimeout(() => {
+      setIsIos(ios);
+
       if (ios) {
         setIsVisible(true);
       }
@@ -103,7 +104,7 @@ export function PwaInstallBanner() {
 
   return (
     <aside
-      aria-label="Pasang aplikasi Pakatlah"
+      aria-label="Install aplikasi Pakatlah"
       className="fixed inset-x-4 z-[90] mx-auto max-w-md sm:inset-x-auto sm:right-6 sm:mx-0"
       style={{
         bottom: "calc(env(safe-area-inset-bottom) + 1rem)",
@@ -120,17 +121,15 @@ export function PwaInstallBanner() {
           />
 
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-foreground">
-              Pasang Pakatlah
-            </p>
+            <p className="font-semibold text-foreground">Install Pakatlah</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Buka lebih cepat terus dari Home Screen.
+              Akses lebih cepat terus dari Home Screen.
             </p>
           </div>
 
           <button
             type="button"
-            aria-label="Tutup cadangan pemasangan"
+            aria-label="Tutup cadangan install"
             className="focus-ring flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             onClick={dismissBanner}
           >
@@ -140,8 +139,8 @@ export function PwaInstallBanner() {
 
         {showIosGuide && (
           <div className="mt-3 rounded-2xl border border-border bg-background/70 p-3 text-sm leading-relaxed text-muted-foreground">
-            Tekan ikon <strong className="text-foreground">Share</strong> dalam
-            Safari, kemudian pilih{" "}
+            Tap <strong className="text-foreground">Share</strong> dalam Safari,
+            kemudian pilih{" "}
             <strong className="text-foreground">Add to Home Screen</strong>.
           </div>
         )}
@@ -156,11 +155,12 @@ export function PwaInstallBanner() {
           ) : (
             <Download aria-hidden="true" size={18} />
           )}
+
           {isIos
             ? showIosGuide
               ? "Tutup panduan"
-              : "Cara pasang"
-            : "Pasang aplikasi"}
+              : "Cara install"
+            : "Install app"}
         </button>
       </div>
     </aside>
