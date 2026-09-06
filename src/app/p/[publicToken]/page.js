@@ -28,6 +28,7 @@ const reactions = [
 export default function PublicDecisionPage() {
   const params = useParams();
   const publicToken = params.publicToken;
+  const responseStorageKey = `pakatlah-response-${publicToken}`;
 
   const [decision, setDecision] = useState(null);
   const [participantName, setParticipantName] = useState("");
@@ -52,31 +53,68 @@ export default function PublicDecisionPage() {
         return;
       }
 
-      const savedResponseToken = window.localStorage.getItem(
-        `pakatlah-response-${publicToken}`,
+      const { data: publicDecision, error: decisionError } = await supabase.rpc(
+        "get_public_decision",
+        {
+          p_public_token: publicToken,
+        },
       );
-
-      if (savedResponseToken && isActive) {
-        setResponseToken(savedResponseToken);
-      }
-
-      const { data, error } = await supabase.rpc("get_public_decision", {
-        p_public_token: publicToken,
-      });
 
       if (!isActive) {
         return;
       }
 
-      if (error) {
-        console.error("Unable to load public decision:", error);
+      if (decisionError) {
+        console.error("Unable to load public decision:", decisionError);
         setErrorMessage("Pilihan ini tidak dapat dimuatkan. Cuba sekali lagi.");
-      } else if (!data) {
-        setErrorMessage("Pilihan ini tidak ditemui atau pautannya tidak sah.");
-      } else {
-        setDecision(data);
+        setIsLoading(false);
+        return;
       }
 
+      if (!publicDecision) {
+        setErrorMessage("Pilihan ini tidak ditemui atau pautannya tidak sah.");
+        setIsLoading(false);
+        return;
+      }
+
+      setDecision(publicDecision);
+
+      const savedResponseToken = window.localStorage.getItem(responseStorageKey);
+
+      if (!savedResponseToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: savedResults, error: savedResultsError } = await supabase.rpc(
+        "get_participant_results",
+        {
+          p_public_token: publicToken,
+          p_response_token: savedResponseToken,
+        },
+      );
+
+      if (!isActive) {
+        return;
+      }
+
+      if (savedResultsError || !savedResults) {
+        if (savedResultsError) {
+          console.warn("Stored response token is no longer valid:", savedResultsError);
+        }
+
+        window.localStorage.removeItem(responseStorageKey);
+        setResponseToken("");
+        setParticipantResults(null);
+        setView("form");
+        setIsLoading(false);
+        return;
+      }
+
+      setResponseToken(savedResponseToken);
+      setParticipantResults(savedResults);
+      setParticipantName(savedResults.currentParticipant?.name || "");
+      setView("submitted");
       setIsLoading(false);
     });
 
@@ -84,7 +122,7 @@ export default function PublicDecisionPage() {
       isActive = false;
       window.cancelAnimationFrame(frame);
     };
-  }, [publicToken]);
+  }, [publicToken, responseStorageKey]);
 
   const isFinalized = decision?.status === "finalized";
   const isClosed = decision?.status !== "open";
@@ -109,7 +147,7 @@ export default function PublicDecisionPage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!isFormValid || isSubmitting) {
+    if (!isFormValid || isSubmitting || responseToken) {
       return;
     }
 
@@ -140,11 +178,9 @@ export default function PublicDecisionPage() {
       return;
     }
 
-    window.localStorage.setItem(
-      `pakatlah-response-${publicToken}`,
-      result.response_token,
-    );
+    window.localStorage.setItem(responseStorageKey, result.response_token);
     setResponseToken(result.response_token);
+    setParticipantResults(null);
     setView("success");
     setIsSubmitting(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -167,12 +203,27 @@ export default function PublicDecisionPage() {
       if (error) {
         console.error("Unable to load participant results:", error);
       }
-      setErrorMessage("Keputusan semasa tidak dapat dimuatkan. Cuba sekali lagi.");
+
+      if (!data) {
+        window.localStorage.removeItem(responseStorageKey);
+        setResponseToken("");
+        setParticipantResults(null);
+        setView("form");
+        setErrorMessage(
+          "Sesi jawapan pada device ini tidak lagi sah. Anda boleh hantar jawapan baharu.",
+        );
+      } else {
+        setErrorMessage(
+          "Keputusan semasa tidak dapat dimuatkan. Cuba sekali lagi.",
+        );
+      }
+
       setIsLoadingResults(false);
       return;
     }
 
     setParticipantResults(data);
+    setParticipantName(data.currentParticipant?.name || participantName);
     setView("results");
     setIsLoadingResults(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -203,49 +254,63 @@ export default function PublicDecisionPage() {
           <section className="mt-7 sm:mt-10">
             <div className="glass-panel rounded-3xl p-6 text-center sm:p-8">
               <AlertCircle className="mx-auto text-destructive" size={34} />
-              <h1 className="mt-4 text-2xl font-bold">Pautan tidak dapat dibuka</h1>
-              <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
+              <h1 className="mt-4 text-2xl font-bold">
+                Pautan tidak dapat dibuka
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {errorMessage}
+              </p>
             </div>
           </section>
         )}
 
-        {!isLoading && decision && view === "success" && (
-          <section className="mt-7 sm:mt-10">
-            <div className="glass-panel rounded-3xl p-6 text-center sm:p-8">
-              <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                <CheckCircle2 aria-hidden="true" size={28} />
-              </span>
-              <p className="mt-5 text-sm font-semibold text-primary">
-                Jawapan diterima
-              </p>
-              <h1 className="mt-2 text-3xl font-bold">
-                Terima kasih, {participantName.trim()}.
-              </h1>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Jawapan anda sudah disimpan. Anda boleh melihat keputusan semasa
-                tanpa membuka dashboard organizer.
-              </p>
-              <button
-                type="button"
-                disabled={isLoadingResults}
-                className="focus-ring mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70 sm:w-auto"
-                onClick={loadParticipantResults}
-              >
-                {isLoadingResults ? (
-                  <LoaderCircle className="animate-spin" size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
-                {isLoadingResults ? "Memuatkan..." : "Lihat keputusan semasa"}
-              </button>
-            </div>
-            {errorMessage && (
-              <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm font-medium text-destructive">
-                {errorMessage}
-              </p>
-            )}
-          </section>
-        )}
+        {!isLoading &&
+          decision &&
+          (view === "success" || view === "submitted") && (
+            <section className="mt-7 sm:mt-10">
+              <div className="glass-panel rounded-3xl p-6 text-center sm:p-8">
+                <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                  <CheckCircle2 aria-hidden="true" size={28} />
+                </span>
+                <p className="mt-5 text-sm font-semibold text-primary">
+                  {view === "submitted"
+                    ? "Jawapan sudah dihantar"
+                    : "Jawapan diterima"}
+                </p>
+                <h1 className="mt-2 text-3xl font-bold">
+                  {participantName.trim()
+                    ? `Terima kasih, ${participantName.trim()}.`
+                    : "Terima kasih."}
+                </h1>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+                  {view === "submitted"
+                    ? "Device ini sudah digunakan untuk menghantar jawapan bagi pilihan ini."
+                    : "Jawapan anda sudah disimpan."}{" "}
+                  Anda boleh melihat keputusan semasa tanpa membuka dashboard
+                  organizer.
+                </p>
+                <button
+                  type="button"
+                  disabled={isLoadingResults}
+                  className="focus-ring mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+                  onClick={loadParticipantResults}
+                >
+                  {isLoadingResults ? (
+                    <LoaderCircle className="animate-spin" size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                  {isLoadingResults ? "Memuatkan..." : "Lihat keputusan semasa"}
+                </button>
+              </div>
+
+              {errorMessage && (
+                <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm font-medium text-destructive">
+                  {errorMessage}
+                </p>
+              )}
+            </section>
+          )}
 
         {!isLoading && decision && view === "results" && participantResults && (
           <section className="mt-7 sm:mt-10">
@@ -263,6 +328,7 @@ export default function PublicDecisionPage() {
                   {participantResults.participantCount} peserta telah menjawab
                 </p>
               </div>
+
               <button
                 type="button"
                 disabled={isLoadingResults}
@@ -291,24 +357,31 @@ export default function PublicDecisionPage() {
 
             <div className="mt-7 space-y-4">
               {participantResults.options.map((option, index) => (
-                <article key={option.id} className="glass-panel rounded-3xl p-5">
+                <article
+                  key={option.id}
+                  className="glass-panel rounded-3xl p-5"
+                >
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-secondary-foreground">
                         {index + 1}
                       </span>
-                      <h2 className="break-words font-semibold">{option.name}</h2>
+                      <h2 className="break-words font-semibold">
+                        {option.name}
+                      </h2>
                     </div>
                     <span className="shrink-0 text-2xl font-bold">
                       {option.consensusScore}%
                     </span>
                   </div>
+
                   <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full rounded-full bg-primary transition-[width] duration-300"
                       style={{ width: `${option.consensusScore}%` }}
                     />
                   </div>
+
                   <div className="mt-3 flex justify-between gap-4 text-sm text-muted-foreground">
                     <span>{option.responseCount} respons</span>
                     <span>
@@ -350,7 +423,9 @@ export default function PublicDecisionPage() {
             {isFinalized && decision.finalOption ? (
               <div className="glass-panel mt-7 rounded-3xl border-primary/30 bg-primary/10 p-6 text-center sm:p-8">
                 <CheckCircle2 className="mx-auto text-primary" size={36} />
-                <p className="mt-4 text-sm font-semibold text-primary">Keputusan akhir</p>
+                <p className="mt-4 text-sm font-semibold text-primary">
+                  Keputusan akhir
+                </p>
                 <h2 className="mt-2 break-words text-3xl font-bold">
                   {decision.finalOption.name}
                 </h2>
@@ -365,7 +440,10 @@ export default function PublicDecisionPage() {
             ) : (
               <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
                 <div className="glass-panel rounded-3xl p-5 sm:p-6">
-                  <label htmlFor="participant-name" className="text-sm font-semibold">
+                  <label
+                    htmlFor="participant-name"
+                    className="text-sm font-semibold"
+                  >
                     Nama
                   </label>
                   <input
@@ -392,8 +470,13 @@ export default function PublicDecisionPage() {
                 </div>
 
                 {decision.options.map((option, index) => (
-                  <fieldset key={option.id} className="glass-panel rounded-3xl p-4 sm:p-5">
-                    <legend className="sr-only">Respons untuk {option.name}</legend>
+                  <fieldset
+                    key={option.id}
+                    className="glass-panel rounded-3xl p-4 sm:p-5"
+                  >
+                    <legend className="sr-only">
+                      Respons untuk {option.name}
+                    </legend>
                     <div className="flex items-center gap-3">
                       <span className="flex size-8 items-center justify-center rounded-full bg-secondary text-sm font-bold text-secondary-foreground">
                         {index + 1}
@@ -404,6 +487,7 @@ export default function PublicDecisionPage() {
                       {reactions.map((reaction) => {
                         const selected =
                           selectedResponses[option.id] === reaction.score;
+
                         return (
                           <button
                             key={reaction.score}
@@ -415,7 +499,9 @@ export default function PublicDecisionPage() {
                                 ? "border-primary bg-primary/15 text-foreground"
                                 : "border-border bg-background/65 text-muted-foreground hover:bg-secondary",
                             ].join(" ")}
-                            onClick={() => selectReaction(option.id, reaction.score)}
+                            onClick={() =>
+                              selectReaction(option.id, reaction.score)
+                            }
                           >
                             <span className="text-2xl">{reaction.emoji}</span>
                             <span>{reaction.label}</span>
@@ -434,7 +520,7 @@ export default function PublicDecisionPage() {
 
                 <button
                   type="submit"
-                  disabled={!isFormValid || isSubmitting}
+                  disabled={!isFormValid || isSubmitting || Boolean(responseToken)}
                   className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground sm:ml-auto sm:w-auto"
                 >
                   {isSubmitting ? (
@@ -445,18 +531,6 @@ export default function PublicDecisionPage() {
                   {isSubmitting ? "Menghantar..." : "Hantar jawapan"}
                 </button>
               </form>
-            )}
-
-            {responseToken && !isFinalized && (
-              <button
-                type="button"
-                disabled={isLoadingResults}
-                className="focus-ring mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-4 text-sm font-semibold hover:bg-secondary sm:w-auto"
-                onClick={loadParticipantResults}
-              >
-                <Eye size={17} />
-                Lihat keputusan semasa
-              </button>
             )}
           </section>
         )}
